@@ -209,7 +209,18 @@ function alternatePlayer(currentPlayer) {
   return (currentPlayer === 'player' ? 'computer' : 'player');
 }
 
-main:
+function playAgain() {
+  while (true) {
+    prompt('Would you like to play again? (y/n)');
+    let answer = readlineSync.question().toLowerCase()[0];
+    if (answer === 'y') {
+      return true;
+    } else if (answer === 'n') {
+      return false;
+    }
+  }
+}
+
 while (true) { // Continue Game (y/n)
   let board = initializeBoard();
 
@@ -234,15 +245,8 @@ while (true) { // Continue Game (y/n)
     prompt("It's a tie");
   }
 
-  while (true) {
-    prompt('Would you like to play again? (y/n)');
-    let answer = readlineSync.question().toLowerCase()[0];
-    if (answer === 'y') {
-      break;
-    } else if (answer === 'n') {
-      break main;
-    }
-  }
+  if (!playAgain()) break;
+
 }
 
 

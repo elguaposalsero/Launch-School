@@ -1,0 +1,6 @@
+{
+  "en" : {
+      "welcome": "Welcome to Calculator!",
+      "invalidNumber": "Hmm... that doesn't look like a valid number. Please enter another one"
+    }
+}

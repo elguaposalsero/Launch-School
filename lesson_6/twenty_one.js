@@ -152,8 +152,3 @@ if (winner === 'tie') {
   print('The dealer wins');
 }
 
-//Try to understand the following approaches for deck generation
-// const deck = cards.reduce((d,c)=>[...d,...suits.map(s=>s+c)],[])
-// eslint-disable-next-line max-len
-// const deck = Array.from({length:52},(_,i)=>suits[Math.floor(i/13)]+cards[i%13])
-
