@@ -1,0 +1,2 @@
+//Without using either of those methods, write a function named isNotANumber that returns true if the value passed to it as an argument is NaN, false if it is not.
+//My only solution would be to check for the other primiative types using typeof. Number, Undefined, Null, String, Object.
