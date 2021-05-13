@@ -1,5 +1,12 @@
 let readline = require('readline-sync');
+
 const VALID_CHOICES = ['rock', 'paper', 'scissors'];
+
+const WINNING_CHOICES = {
+  rock: 'scissors',
+  paper: 'rock',
+  scissors: 'paper'
+}
 
 let gameplay = {
   winner: null,
@@ -19,9 +26,7 @@ let gameplay = {
   evaluateWinner() {
     let humanMove = this.human.currentMove;
     let computerMove = this.computer.currentMove;
-    if ((humanMove === 'rock' && computerMove === 'scissors') ||
-        (humanMove === 'paper' && computerMove === 'rock') ||
-        (humanMove === 'scissors' && computerMove === 'paper')) {
+    if (WINNING_CHOICES[humanMove] === computerMove) {
       this.winner = this.human;
     } else if (humanMove === computerMove) {
       this.winner = null;
@@ -48,7 +53,7 @@ let gameplay = {
   playAgain() {
     console.log('Would you like to play again?');
     while (true) {
-      let answer = readline.question()[0].toLowerCase();
+      let answer = readline.question();
       if (answer === 'y') {
         this.playAgainStatus = true;
         break;
