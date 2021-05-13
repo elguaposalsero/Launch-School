@@ -1,4 +1,5 @@
 // Improvements:
+  // Added a small comment here
   // Purse should be calculated in the player class, not in the game class
   // Don't create a new player every game.
   // Improve names
