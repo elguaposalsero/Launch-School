@@ -1,118 +1,4 @@
-// Improvements:
-  // Added a small comment here
-  // Purse should be calculated in the player class, not in the game class
-  // Don't create a new player every game.
-  // Improve names
-  // Get rid of all constants
-  // The game should be computing all of the scores
-  // Get rid of all magic numbers.
-
-// Questions
-    // If I display constant in "game" but want to use it somewhere before
-    // For example, maybe I want to use it in "player"
-    // What do I do then in that case?
-
 let readline = require('readline-sync');
-
-class Player {
-  constructor() {
-    this.hand = [];
-    this.playingStatus = true; //TK Change name
-  }
-
-  acceptCards(cards) {
-    this.hand.push(...cards);
-  }
-
-  displayHand() {
-    console.log(`${this.constructor.name}: ${this.hand.join(', ')}`);
-  }
-
-  stillPlaying() {
-    return this.playingStatus;
-  }
-
-  valueOfHand() {
-    let acesExcluded = this.hand.filter(card => card[0] !== 'A'); // Array without aces
-    let aces = this.hand.filter(card => card[0] === 'A'); // Array with aces
-
-    let valueWithoutAces = acesExcluded.reduce((sum, card) => {
-      return sum + Game.CARD_VALUES[card.slice(0, -1)];
-    }, 0);
-
-    return this.valueWithAces(valueWithoutAces, aces);
-
-  }
-
-  valueWithAces(valueWithoutAces, numAces) { // Make winning score equal to 21 as a static variable
-    let MIN_ACE_VALUE = 1;
-    let MAX_ACE_VALUE = 11;
-
-    let valueWithAces = valueWithoutAces;
-
-    numAces.forEach(ace => {
-      if (valueWithAces + MAX_ACE_VALUE <= 21) {
-        valueWithAces += MAX_ACE_VALUE;
-      } else {
-        valueWithAces += MIN_ACE_VALUE;
-      }
-    });
-
-    return valueWithAces;
-  }
-
-}
-
-class Human extends Player {
-  constructor() {
-    super();
-  }
-
-  hitDecision() {
-    let selection;
-
-    if (this.valueOfHand() > 21) {
-      this.playingStatus = false;
-    }
-
-    if (!this.playingStatus) {
-      return false;
-    }
-
-    while (true) {
-      selection = (readline.question('Hit Or Stay (h/s)? ')).toLowerCase()[0];
-      if (selection === 'h' || selection === 's') break;
-    }
-
-    if (selection === 'h') {
-      return true;
-    } else {
-      this.playingStatus = false;
-      return false;
-    }
-  }
-
-}
-
-class Dealer extends Player {
-  constructor() {
-    super();
-  }
-
-  displayPartialHand() {
-    let visibleHand = this.hand.slice(0, -1);
-    console.log(`${this.constructor.name}: ${visibleHand.join(', ')} + Unknown`);
-  }
-
-  hitDecision() {
-    if (this.valueOfHand() < 17) {
-      return true;
-    } else {
-      this.playingStatus = false;
-      return false;
-    }
-  }
-}
 
 class Deck {
   constructor() {
@@ -130,22 +16,96 @@ class Deck {
     while (numCards > 0) {
       let randIndex = Math.floor(Math.random() * this.deck.length);
       selectedCards.push(this.deck[randIndex]);
-      this.deck.splice(randIndex, 1);
+      this.removeCardAtIndex(randIndex);
       numCards -= 1;
     }
 
     return selectedCards;
+  }
+
+  removeCardAtIndex(index) {
+    this.deck.splice(index, 1);
+  }
+}
+
+class Player {
+  constructor() {
+    this.reset();
+  }
+
+  acceptCards(cards) {
+    this.hand.push(...cards);
+  }
+
+  displayHand() {
+    console.log(`${this.constructor.name}: ${this.hand.join(', ')}`);
+  }
+
+  stillPlaying() {
+    return this.playStatus;
+  }
+
+  reset() {
+    this.hand = [];
+    this.playStatus = true;
+  }
+
+  getHand() {
+    return this.hand;
+  }
+
+}
+
+class Human extends Player {
+  constructor() {
+    super();
+  }
+
+  hitOrStay() {
+    let selection;
+
+    while (true) {
+      selection = (readline.question('Hit Or Stay (h/s)? ')).toLowerCase()[0];
+      if (selection === Game.HIT || selection === Game.STAY) break;
+    }
+
+    if (selection === Game.STAY) {
+      this.playStatus = false;
+    }
+
+    return selection;
+  }
+
+}
+
+class Dealer extends Player {
+  constructor() {
+    super();
+  }
+
+  getPartialHand() {
+    return this.hand.slice(0, -1);
+  }
+
+  displayPartialHand() {
+    console.log(`${this.constructor.name}: ${this.getPartialHand().join(', ')} + Unknown`);
   }
 }
 
 class Game {
   constructor() {
     this.humanAccountBalance = 5;
+    this.human = new Human;
+    this.dealer = new Dealer;
+    this.deck = new Deck;
   }
 
   static TARGET_SCORE = 21;
-  static HIT = 'h'
-  static STAY = 's'
+  static HIT = 'h';
+  static STAY = 's';
+  static MIN_ACE_VALUE = 1;
+  static MAX_ACE_VALUE = 11;
+  static DEALER_STOP_VALUE = 17
 
   static CARD_VALUES = {
     2: 2,
@@ -162,45 +122,41 @@ class Game {
     K: 10,
   }
 
-  play() {
-    this.displayWelcome();
-    this.displayRules();
-    do {
-      this.setupGame();
-      this.playRound();
-      this.human.displayHand();
-      this.dealer.displayHand();
-      this.calculateRoundWinner();
-      this.displayRoundWinner();
-      this.adjustHumanAccountBalance();
-      this.displayAccountBalance();
-    } while (!this.gameOver());
-    this.displayGoodbye();
-  }
-
-  setupGame() {
-    this.human = new Human();
-    this.dealer = new Dealer();
-    this.roundWinner = undefined;
-    this.deck = new Deck();
-  }
+  // play() { // Need to refresh
+  //   this.displayWelcome();
+  //   this.displayRules();
+  //   do {
+  //     this.playRound();
+  //     this.human.displayHand();
+  //     this.dealer.displayHand();
+  //     this.calculateRoundWinner();
+  //     this.displayRoundWinner();
+  //     this.adjustHumanAccountBalance();
+  //     this.displayAccountBalance();
+  //   } while (!this.gameOver());
+  //   this.displayGoodbye();
+  // }
 
   playRound() {
     this.dealInitialCards();
-
     while (!this.roundOver()) {
       this.human.displayHand();
       this.dealer.displayPartialHand();
-
-      if (this.human.hitDecision()) {
-        this.dealCards(this.human, 1);
-      }
-      if (this.dealer.hitDecision()) {
-        this.dealCards(this.dealer, 1);
-      }
-      console.clear();
+      this.humanTurn();
+      this.dealerTurn();
+      this.clearScreen();
     }
+    this.displayRoundResult();
   }
+
+  displayFullHand(player) {
+    console.log(`${this.player.displayHand()} — ${this.valueOfHand(player)} points`);
+  }
+
+  displayPartialHand(player) {
+    console.log(`${this.player.displayPartialHand()} — ${this.valueOfHand(player)} points`);
+  }
+
 
   displayWelcome() {
     console.log("Welcome to the game Twenty One");
@@ -210,10 +166,8 @@ class Game {
     console.log("You'll start with $5. You can keep playing until you go broke ($0) or become rich ($10)");
   }
 
-
   dealCards(player, numCards) {
-    let cards = this.deck.dealCards(numCards);
-    player.acceptCards(cards);
+    player.acceptCards(this.deck.dealCards(numCards));
   }
 
   dealInitialCards() {
@@ -221,81 +175,154 @@ class Game {
     this.dealCards(this.dealer, 2);
   }
 
-  roundOver() {
-    if (this.dealer.stillPlaying() || this.human.stillPlaying()) {
-      return false;
+  isBusted(player) {
+    return this.valueOfHand(player) > Game.TARGET_SCORE;
+  }
+
+  humanTurn() {
+    if (!this.human.stillPlaying()) return;
+
+    if (this.human.hitOrStay() === Game.HIT) {
+      this.dealCards(this.human, 1);
     }
-    return true;
+  }
+
+  dealerTurn() {
+    if ((this.valueOfHand(this.dealer) <= Game.DEALER_STOP_VALUE) &&
+        (!this.isBusted(this.human))) {
+      this.dealCards(this.dealer, 1);
+    }
+  }
+
+  displayRoundResult() {
+    this.human.displayHand();
+    this.dealer.displayHand();
+
+    if (this.calculateRoundWinner() === 'human') {
+      console.log ('Congratulations, you won the round');
+    } else if (this.calculateRoundWinner() === 'dealer') {
+      console.log('Ha! The dealer won!');
+    } else {
+      console.log('Well Played ... this round was a tie');
+    }
+  }
+
+  valueOfHand(player) { 
+    let noAces = player.getHand().filter(card => card[0] !== 'A');
+    let aces = player.getHand().filter(card => card[0] === 'A');
+
+    let valueWithoutAces = noAces.reduce((sum, card) => {
+      return sum + Game.CARD_VALUES[card.slice(0, -1)];
+    }, 0);
+
+    return this.valueWithAces(valueWithoutAces, aces);
+
+  }
+
+  valueWithAces(valueWithoutAces, aces) {
+    let valueWithAces = valueWithoutAces;
+    aces.forEach(ace => {
+      if (valueWithAces + Game.MAX_ACE_VALUE <= Game.TARGET_SCORE) {
+        valueWithAces += Game.MAX_ACE_VALUE;
+      } else {
+        valueWithAces += Game.MIN_ACE_VALUE;
+      }
+    });
+    return valueWithAces;
+  }
+
+  roundOver() {
+    if (this.isBusted(this.human) || !this.human.stillPlaying()) {
+      return true;
+    }
+    return false;
+  }
+
+  clearScreen() {
+    console.clear();
   }
 
   calculateRoundWinner() {
-    let human = this.human.valueOfHand();
-    let dealer = this.dealer.valueOfHand();
+    let human = this.valueOfHand(this.human);
+    let dealer = this.valueOfHand(this.dealer);
 
-    console.log(human);
-    console.log(dealer);
-
-    if ((human > dealer && human <= 21) || (human <= 21 && dealer > 21)) {
-      this.roundWinner = 'human';
-    // eslint-disable-next-line max-len
-    } else if ((dealer > human && dealer <= 21) || (dealer <= 21 && human > 21)) {
-      this.roundWinner = 'dealer';
+    if ((human > dealer && human <= Game.TARGET_SCORE) ||
+        (human <= Game.TARGET_SCORE && dealer > Game.TARGET_SCORE)) {
+      return 'human';
+    } else if ((dealer > human && dealer <= Game.TARGET_SCORE) ||
+               (dealer <= Game.TARGET_SCORE && human > Game.TARGET_SCORE)) {
+      return 'dealer';
     } else {
-      this.roundWinner = undefined;
+      return undefined;
     }
   }
 
-  adjustHumanAccountBalance() {
-    if (this.roundWinner === 'human') {
-      this.adjustAccountBalance(1);
-    } else if (this.roundWinner === 'dealer') {
-      this.adjustAccountBalance(-1);
-    }
-  }
 
-  gameOver() {
-    if (this.humanAccountBalance === 10 || this.humanAccountBalance === 0) {
-      return true;
-    }
+  // adjustHumanAccountBalance() {
+  //   if (this.roundWinner === 'human') {
+  //     this.adjustAccountBalance(1);
+  //   } else if (this.roundWinner === 'dealer') {
+  //     this.adjustAccountBalance(-1);
+  //   }
+  // }
 
-    let playAgain;
+  // gameOver() {
+  //   if (this.humanAccountBalance === 10 || this.humanAccountBalance === 0) {
+  //     return true;
+  //   }
 
-    while (true) {
-      playAgain = readline.question('Would you like to play again (y/n)? ').toLowerCase()[0];
-      if (playAgain === 'y' || playAgain === 'n') break;
-    }
+  //   let playAgain;
 
-    if (playAgain === 'y') {
-      return false;
-    } else {
-      return true;
-    }
-  }
+  //   while (true) {
+  //     playAgain = readline.question('Would you like to play again (y/n)? ').toLowerCase()[0];
+  //     if (playAgain === 'y' || playAgain === 'n') break;
+  //   }
 
-  displayRoundWinner() {
-    if (this.roundWinner === undefined) {
-      console.log ('This round was a tie');
-    } else if (this.roundWinner === 'human') {
-      console.log('Congrats, you won this round! You win $1');
-    } else {
-      console.log('Ha! The dealer won. You lose $1');
-    }
-  }
+  //   if (playAgain === 'y') {
+  //     return false;
+  //   } else {
+  //     return true;
+  //   }
+  // }
 
-  displayGoodbye() {
-    console.log("The game is over. Thanks for Playing!");
-    // Explain why the game is over
-  }
+  // displayRoundWinner() {
+  //   if (this.roundWinner === undefined) {
+  //     console.log ('This round was a tie');
+  //   } else if (this.roundWinner === 'human') {
+  //     console.log('Congrats, you won this round! You win $1');
+  //   } else {
+  //     console.log('Ha! The dealer won. You lose $1');
+  //   }
+  // }
 
-  adjustAccountBalance(adjustment) {
-    this.humanAccountBalance += adjustment;
-  }
+  // displayGoodbye() {
+  //   console.log("The game is over. Thanks for Playing!");
+  //   // Explain why the game is over
+  // }
 
-  displayAccountBalance() {
-    console.log(`Your current balance is: $${this.humanAccountBalance}`);
-  }
+  // adjustAccountBalance(adjustment) {
+  //   this.humanAccountBalance += adjustment;
+  // }
+
+  // displayAccountBalance() {
+  //   console.log(`Your current balance is: $${this.humanAccountBalance}`);
+  // }
 
 }
 
 let game = new Game();
-game.play();
+game.playRound()
+
+// dealerTurn() {
+//   this.dealer.revealAllCards();
+
+//   console.clear();
+//   this.showCards();
+
+//   while (true) {
+//     let score = this.computeScoreFor(this.dealer);
+//     if (score >= TwentyOneGame.DEALER_MUST_STAY_SCORE) break;
+//     this.dealerContinue();
+//     this.hit(this.dealer);
+//   }
+// }
