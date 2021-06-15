@@ -1,9 +1,11 @@
 let readline = require('readline-sync');
 
 class Card {
+  
   static SUITS = ['♦', '♣', '♥', '♠']
   static RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10",
                   "Jack", "Queen", "King", "Ace"];
+  
   constructor(rank, suit) {
     this.rank = rank;
     this.suit = suit;

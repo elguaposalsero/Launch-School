@@ -1,4 +1,4 @@
-const readline = require("readline-sync");
+ const readline = require("readline-sync");
 const shuffle = require("shuffle-array");
 
 class Card {
@@ -246,6 +246,7 @@ class TwentyOneGame {
     console.clear();
     this.showCards();
 
+    console.log(this.computeScoreFor(this.dealer));
     while (true) {
       let score = this.computeScoreFor(this.dealer);
       if (score >= TwentyOneGame.DEALER_MUST_STAY_SCORE) break;
@@ -260,7 +261,6 @@ class TwentyOneGame {
     this.dealer.resetHand();
 
     this.player.addToHand(this.deck.dealCardFaceUp());
-    console.log(this.player.cards);
     this.dealer.addToHand(this.deck.dealCardFaceUp());
     this.player.addToHand(this.deck.dealCardFaceUp());
     this.dealer.addToHand(this.deck.dealCardFaceDown());
